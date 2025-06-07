@@ -5,146 +5,208 @@ trip_duration_days=$1
 miles_traveled=$2
 total_receipts_amount=$3
 
-# Python script to calculate reimbursement
+# Python script to calculate reimbursement using decision tree
 python3 << EOF
 trip_duration_days = $trip_duration_days
 miles_traveled = $miles_traveled
 total_receipts_amount = $total_receipts_amount
 
-# Special lookup table for .49 receipts
-SPECIAL_49_PERCENTAGES = {
-    202.49: 90.4719841793,
-    293.49: 80.1056803170,
-    296.49: 65.3559822747,
-    348.49: 87.0629170639,
-    389.49: 84.4588832487,
-    396.49: 83.8985200846,
-    495.49: 72.2288557214,
-    555.49: 49.0711043873,
-    619.49: 90.7892617450,
-    710.49: 83.6952380952,
-    1063.49: 74.2753108348,
-    1228.49: 89.6320777046,
-    1411.49: 63.3711133400,
-    1809.49: 69.1857585139,
-    1878.49: 91.6974674880,
-    2321.49: 70.8470847085,
-}
+# Calculate derived features
+miles_per_day = miles_traveled / trip_duration_days if trip_duration_days > 0 else 0
+receipts_per_day = total_receipts_amount / trip_duration_days if trip_duration_days > 0 else 0
+receipts_per_mile = total_receipts_amount / miles_traveled if miles_traveled > 0 else 0
+days_x_miles = trip_duration_days * miles_traveled
+days_x_receipts = trip_duration_days * total_receipts_amount
+miles_x_receipts = miles_traveled * total_receipts_amount
 
-# Check for special high-mileage long-trip rule
-receipt_mile_ratio = total_receipts_amount / miles_traveled if miles_traveled > 0 else 0
-if trip_duration_days >= 7 and miles_traveled > 900 and 0.8 <= receipt_mile_ratio <= 1.2:
-    # Special formula: receipts + miles
-    total = total_receipts_amount + miles_traveled
-else:
-    # Normal calculation path
-    
-    # Base per diem: $105/day
-    base_per_diem = 105.0
-    base_amount = trip_duration_days * base_per_diem
-    
-    # Mileage calculation (tiered)
-    if miles_traveled <= 100:
-        mileage_amount = miles_traveled * 0.58
-    else:
-        mileage_amount = 100 * 0.58 + (miles_traveled - 100) * 0.45
-    
-    # Calculate efficiency (miles per day)
-    efficiency = miles_traveled / trip_duration_days if trip_duration_days > 0 else 0
-    
-    # Apply efficiency modifiers (REVERSED - lower efficiency is better!)
-    if efficiency <= 50:
-        mileage_amount *= 1.15
-    elif efficiency <= 100:
-        mileage_amount *= 1.05
-    elif efficiency >= 250:
-        mileage_amount *= 0.85
-    
-    # Apply bonuses/penalties
-    bonus = 0
-    
-    # 5+ day trip bonus
-    if trip_duration_days >= 5:
-        bonus += 50
-    
-    # Duration penalty for 5+ day trips
-    if trip_duration_days >= 5:
-        penalty = trip_duration_days * 75
-        base_amount -= penalty
-    
-    # Calculate total allowance (base + mileage + bonus)
-    total_allowance = base_amount + mileage_amount + bonus
-    
-    # Calculate spending per day
-    spending_per_day = total_receipts_amount / trip_duration_days if trip_duration_days > 0 else 0
-    
-    # Check for special receipt endings
-    cents = int(round(total_receipts_amount * 100)) % 100
-    
-    # Check if this is a special .49 receipt case
-    if total_receipts_amount in SPECIAL_49_PERCENTAGES:
-        # Apply special percentage to total allowance
-        percentage = SPECIAL_49_PERCENTAGES[total_receipts_amount]
-        total = total_allowance * (percentage / 100)
-    # Check for .33 ending with special conditions
-    elif cents == 33:
-        # Calculate receipts/miles ratio
-        ratio = total_receipts_amount / miles_traveled if miles_traveled > 0 else 0
-        # Special rule only applies for low miles + low spending + ratio near 0.33
-        if miles_traveled < 20 and spending_per_day < 10 and 0.3 <= ratio <= 0.4:
-            total = total_allowance * 1.57
-        elif 570 <= total_allowance <= 1120:
-            # The 2x rule for certain allowance ranges
-            total = total_allowance * 2
-        else:
-            # Normal calculation for other .33 cases
-            if total_receipts_amount < 50:
-                receipt_amount = total_receipts_amount * 0.8
-            elif total_receipts_amount <= 500:
-                receipt_amount = total_receipts_amount * 0.9
-            elif total_receipts_amount <= 1000:
-                receipt_amount = 450 + (total_receipts_amount - 500) * 0.7
-            else:
-                receipt_amount = 800 + (total_receipts_amount - 1000) * 0.5
-            receipt_amount = min(receipt_amount, 1000)
-            total = base_amount + mileage_amount + receipt_amount + bonus
-    # Check for .99 ending
-    elif cents == 99:
-        # Special rule for .99 receipts
-        if total_receipts_amount < 900:
-            # Return just the allowance (ignore receipts)
-            total = total_allowance
-        else:
-            # For higher amounts, use normal calculation with bonus
-            if total_receipts_amount < 50:
-                receipt_amount = total_receipts_amount * 0.8
-            elif total_receipts_amount <= 500:
-                receipt_amount = total_receipts_amount * 0.9
-            elif total_receipts_amount <= 1000:
-                receipt_amount = 450 + (total_receipts_amount - 500) * 0.7
-            else:
-                receipt_amount = 800 + (total_receipts_amount - 1000) * 0.5
-            receipt_amount = min(receipt_amount, 1000)
-            receipt_amount += 10  # .99 bonus
-            total = base_amount + mileage_amount + receipt_amount + bonus
-    else:
-        # Normal receipt reimbursement WITHOUT spending multipliers
-        # Calculate receipt amount with standard tiers
-        if total_receipts_amount < 50:
-            receipt_amount = total_receipts_amount * 0.8
-        elif total_receipts_amount <= 500:
-            receipt_amount = total_receipts_amount * 0.9
-        elif total_receipts_amount <= 1000:
-            receipt_amount = 450 + (total_receipts_amount - 500) * 0.7
-        else:
-            receipt_amount = 800 + (total_receipts_amount - 1000) * 0.5
-        
-        # Cap receipt reimbursement at $1000
-        receipt_amount = min(receipt_amount, 1000)
-        
-        # Calculate total WITHOUT spending multipliers
-        total = base_amount + mileage_amount + receipt_amount + bonus
+# Decision tree logic (score: 7778!)
+if total_receipts_amount <= 828.10:
+    if days_x_miles <= 2070.00:
+        if days_x_receipts <= 487.54:
+            if days_x_miles <= 566.00:
+                if days_x_miles <= 210.50:
+                    total = 196.57
+                else:  # days_x_miles > 210.50
+                    total = 336.31
+            else:  # days_x_miles > 566.00
+                total = 559.32
+        else:  # days_x_receipts > 487.54
+            if days_x_receipts <= 4036.29:
+                if days_x_miles <= 1310.50:
+                    if total_receipts_amount <= 588.27:
+                        if trip_duration_days <= 4.50:
+                            total = 492.73
+                        else:  # trip_duration_days > 4.50
+                            total = 619.95
+                    else:  # total_receipts_amount > 588.27
+                        total = 719.40
+                else:  # days_x_miles > 1310.50
+                    if days_x_receipts <= 1467.28:
+                        total = 700.75
+                    else:  # days_x_receipts > 1467.28
+                        total = 828.74
+            else:  # days_x_receipts > 4036.29
+                total = 935.06
+    else:  # days_x_miles > 2070.00
+        if days_x_miles <= 4945.50:
+            if total_receipts_amount <= 570.45:
+                if days_x_receipts <= 1790.10:
+                    if days_x_miles <= 3963.60:
+                        if receipts_per_mile <= 0.41:
+                            total = 750.44
+                        else:  # receipts_per_mile > 0.41
+                            total = 788.25
+                    else:  # days_x_miles > 3963.60
+                        total = 845.60
+                else:  # days_x_receipts > 1790.10
+                    if miles_traveled <= 628.50:
+                        if receipts_per_mile <= 1.11:
+                            total = 925.07
+                        else:  # receipts_per_mile > 1.11
+                            total = 853.04
+                    else:  # miles_traveled > 628.50
+                        total = 1000.77
+            else:  # total_receipts_amount > 570.45
+                if total_receipts_amount <= 691.05:
+                    total = 1019.89
+                else:  # total_receipts_amount > 691.05
+                    total = 1170.65
+        else:  # days_x_miles > 4945.50
+            if miles_x_receipts <= 529812.36:
+                if trip_duration_days <= 10.50:
+                    if days_x_receipts <= 2838.70:
+                        if receipts_per_mile <= 0.18:
+                            total = 1111.45
+                        else:  # receipts_per_mile > 0.18
+                            total = 1042.71
+                    else:  # days_x_receipts > 2838.70
+                        total = 1208.17
+                else:  # trip_duration_days > 10.50
+                    if days_x_miles <= 11460.50:
+                        if miles_x_receipts <= 218691.81:
+                            total = 1213.97
+                        else:  # miles_x_receipts > 218691.81
+                            total = 1298.64
+                    else:  # days_x_miles > 11460.50
+                        total = 1364.90
+            else:  # miles_x_receipts > 529812.36
+                if days_x_receipts <= 5526.72:
+                    total = 1417.53
+                else:  # days_x_receipts > 5526.72
+                    total = 1611.04
+else:  # total_receipts_amount > 828.10
+    if days_x_miles <= 3873.00:
+        if days_x_receipts <= 5494.43:
+            if miles_x_receipts <= 385934.73:
+                if total_receipts_amount <= 1082.07:
+                    if days_x_receipts <= 3208.57:
+                        total = 949.66
+                    else:  # days_x_receipts > 3208.57
+                        total = 1099.06
+                else:  # total_receipts_amount > 1082.07
+                    total = 1239.56
+            else:  # miles_x_receipts > 385934.73
+                if miles_x_receipts <= 1033628.09:
+                    if days_x_receipts <= 2736.24:
+                        if miles_x_receipts <= 827348.03:
+                            total = 1176.45
+                        else:  # miles_x_receipts > 827348.03
+                            total = 1261.61
+                    else:  # days_x_receipts > 2736.24
+                        if total_receipts_amount <= 942.36:
+                            total = 1288.02
+                        else:  # total_receipts_amount > 942.36
+                            total = 1376.78
+                else:  # miles_x_receipts > 1033628.09
+                    if days_x_miles <= 1205.00:
+                        if receipts_per_mile <= 1.77:
+                            total = 1294.13
+                        else:  # receipts_per_mile > 1.77
+                            total = 1408.36
+                    else:  # days_x_miles > 1205.00
+                        if miles_per_day <= 406.00:
+                            total = 1495.94
+                        else:  # miles_per_day > 406.00
+                            total = 1526.97
+        else:  # days_x_receipts > 5494.43
+            if days_x_receipts <= 11625.58:
+                if days_x_miles <= 979.83:
+                    if days_x_receipts <= 9327.43:
+                        total = 1270.85
+                    else:  # days_x_receipts > 9327.43
+                        total = 1406.93
+                else:  # days_x_miles > 979.83
+                    if miles_traveled <= 518.50:
+                        if days_x_miles <= 2578.00:
+                            total = 1496.66
+                        else:  # days_x_miles > 2578.00
+                            total = 1336.63
+                    else:  # miles_traveled > 518.50
+                        if receipts_per_day <= 624.27:
+                            total = 1653.03
+                        else:  # receipts_per_day > 624.27
+                            total = 1498.03
+            else:  # days_x_receipts > 11625.58
+                if trip_duration_days <= 12.50:
+                    if receipts_per_mile <= 6.38:
+                        total = 1664.33
+                    else:  # receipts_per_mile > 6.38
+                        if trip_duration_days <= 8.50:
+                            total = 1528.26
+                        else:  # trip_duration_days > 8.50
+                            total = 1605.61
+                else:  # trip_duration_days > 12.50
+                    total = 1714.87
+    else:  # days_x_miles > 3873.00
+        if days_x_miles <= 6939.00:
+            if total_receipts_amount <= 1089.04:
+                total = 1476.82
+            else:  # total_receipts_amount > 1089.04
+                if miles_per_day <= 99.75:
+                    if trip_duration_days <= 10.50:
+                        if miles_x_receipts <= 1229175.00:
+                            total = 1636.17
+                        else:  # miles_x_receipts > 1229175.00
+                            total = 1521.96
+                    else:  # trip_duration_days > 10.50
+                        if receipts_per_day <= 169.39:
+                            total = 1795.96
+                        else:  # receipts_per_day > 169.39
+                            total = 1702.51
+                else:  # miles_per_day > 99.75
+                    if trip_duration_days <= 5.50:
+                        if miles_traveled <= 1030.50:
+                            total = 1736.47
+                        else:  # miles_traveled > 1030.50
+                            total = 1659.12
+                    else:  # trip_duration_days > 5.50
+                        if trip_duration_days <= 6.50:
+                            total = 1778.50
+                        else:  # trip_duration_days > 6.50
+                            total = 1860.13
+        else:  # days_x_miles > 6939.00
+            if days_x_miles <= 11863.00:
+                if miles_per_day <= 127.34:
+                    if miles_x_receipts <= 877176.88:
+                        total = 1742.71
+                    else:  # miles_x_receipts > 877176.88
+                        if receipts_per_day <= 174.05:
+                            total = 1906.01
+                        else:  # receipts_per_day > 174.05
+                            total = 1800.23
+                else:  # miles_per_day > 127.34
+                    if days_x_receipts <= 12912.54:
+                        total = 2048.61
+                    else:  # days_x_receipts > 12912.54
+                        total = 1857.20
+            else:  # days_x_miles > 11863.00
+                if total_receipts_amount <= 1787.72:
+                    if miles_traveled <= 1017.50:
+                        total = 1988.28
+                    else:  # miles_traveled > 1017.50
+                        total = 2136.03
+                else:  # total_receipts_amount > 1787.72
+                    total = 1924.59
 
-# Round to 2 decimal places
 print(f"{total:.2f}")
 EOF
