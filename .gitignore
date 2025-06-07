@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Analysis scripts (not needed for submission)
+analyze_*.py
+test_*.py
+check_*.py
+find_*.py
+refine_*.py
+verify_*.py
+detailed_*.py
+deep_*.py
+formula_*.py
+solution.py
+simple_*.py
+radical_*.py
+final_*.py
+kevin_*.py
+
+# Analysis outputs
+*.csv
+*_summary.py
+*_summary.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
