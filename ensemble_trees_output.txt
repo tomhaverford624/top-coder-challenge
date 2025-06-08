@@ -1,0 +1,51 @@
+Testing different ensemble methods...
+============================================================
+
+1. Random Forest Ensemble:
+  Trees=10, Depth=3: Avg Error=$113.22, Total=$113216
+  Trees=10, Depth=4: Avg Error=$92.12, Total=$92122
+  Trees=10, Depth=5: Avg Error=$77.61, Total=$77607
+  Trees=10, Depth=6: Avg Error=$66.37, Total=$66365
+  Trees=20, Depth=3: Avg Error=$114.00, Total=$113998
+  Trees=20, Depth=4: Avg Error=$91.37, Total=$91375
+  Trees=20, Depth=5: Avg Error=$76.18, Total=$76183
+  Trees=20, Depth=6: Avg Error=$64.62, Total=$64618
+  Trees=50, Depth=3: Avg Error=$110.69, Total=$110695
+  Trees=50, Depth=4: Avg Error=$88.24, Total=$88245
+  Trees=50, Depth=5: Avg Error=$74.24, Total=$74240
+  Trees=50, Depth=6: Avg Error=$62.51, Total=$62514
+  Trees=100, Depth=3: Avg Error=$109.82, Total=$109821
+  Trees=100, Depth=4: Avg Error=$87.99, Total=$87994
+  Trees=100, Depth=5: Avg Error=$73.86, Total=$73855
+  Trees=100, Depth=6: Avg Error=$61.82, Total=$61825
+
+2. Extra Trees Ensemble:
+  Trees=20, Depth=4: Avg Error=$95.82, Total=$95819
+  Trees=20, Depth=5: Avg Error=$82.39, Total=$82391
+  Trees=20, Depth=6: Avg Error=$69.29, Total=$69293
+  Trees=50, Depth=4: Avg Error=$92.71, Total=$92712
+  Trees=50, Depth=5: Avg Error=$79.87, Total=$79871
+  Trees=50, Depth=6: Avg Error=$67.36, Total=$67359
+  Trees=100, Depth=4: Avg Error=$92.26, Total=$92261
+  Trees=100, Depth=5: Avg Error=$79.31, Total=$79312
+  Trees=100, Depth=6: Avg Error=$67.52, Total=$67518
+
+3. Gradient Boosting:
+  Trees=50, Depth=3: Avg Error=$63.60, Total=$63605
+  Trees=50, Depth=4: Avg Error=$51.98, Total=$51981
+  Trees=50, Depth=5: Avg Error=$39.87, Total=$39868
+  Trees=100, Depth=3: Avg Error=$52.79, Total=$52790
+  Trees=100, Depth=4: Avg Error=$40.37, Total=$40368
+  Trees=100, Depth=5: Avg Error=$28.45, Total=$28450
+  Trees=200, Depth=3: Avg Error=$41.46, Total=$41464
+  Trees=200, Depth=4: Avg Error=$28.69, Total=$28685
+  Trees=200, Depth=5: Avg Error=$17.49, Total=$17489
+
+============================================================
+Selecting best ensemble model...
+
+Best model average error: $40.37
+
+Generating ensemble prediction code...
+
+Ensemble solution saved to solution_ensemble.py

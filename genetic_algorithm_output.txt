@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/tomhaverford/top-coder-challenge/genetic_algorithm.py", line 10, in <module>
+    from deap import base, creator, tools, algorithms
+ModuleNotFoundError: No module named 'deap'

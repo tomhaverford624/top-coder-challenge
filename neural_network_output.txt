@@ -1,0 +1,53 @@
+Training Neural Networks...
+============================================================
+
+Testing architecture: (10,)
+  Average Error: $501.69
+  Total Error: $501689
+
+Testing architecture: (20,)
+  Average Error: $309.08
+  Total Error: $309083
+
+Testing architecture: (50,)
+  Average Error: $141.08
+  Total Error: $141081
+
+Testing architecture: (20, 10)
+  Average Error: $107.20
+  Total Error: $107201
+
+Testing architecture: (30, 20)
+  Average Error: $102.21
+  Total Error: $102210
+
+Testing architecture: (50, 25)
+  Average Error: $97.05
+  Total Error: $97053
+
+Testing architecture: (30, 20, 10)
+  Average Error: $98.34
+  Total Error: $98336
+
+Testing architecture: (50, 30, 15)
+  Average Error: $82.32
+  Total Error: $82320
+
+============================================================
+Best architecture: (50, 30, 15)
+Best total error: $82320
+
+Fine-tuning best model...
+Best parameters: {'alpha': 0.0001, 'learning_rate_init': 0.1}
+Final average error: $77.33
+
+Generating neural network implementation...
+
+Neural network solution saved to solution_neural_network.py
+
+Saving exact neural network weights...
+Traceback (most recent call last):
+  File "/Users/tomhaverford/top-coder-challenge/neural_network.py", line 245, in <module>
+    weights=weights,
+            ^^^^^^^
+NameError: name 'weights' is not defined
